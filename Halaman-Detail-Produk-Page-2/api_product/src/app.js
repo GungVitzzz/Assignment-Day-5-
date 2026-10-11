@@ -1,0 +1,20 @@
+import express from "express";
+import swaggerJsdoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
+import { openapiDefinition } from "./docs/openapi.js";
+import { errorHandler } from "./middleware/error-handler.js";
+import { apiNotFound } from "./middleware/not-found.js";
+import { requestId } from "./middleware/request-id.js";
+import { devCors } from "./middleware/dev-cors.js";
+import { productRouter } from "./routes/product.routes.js";
+
+const openapi = swaggerJsdoc({ definition: openapiDefinition, apis: [] });
+export const app = express();
+app.use(requestId);
+app.use(devCors);
+app.use(express.json({ limit: "100kb" }));
+app.get("/openapi.json", (_req, res) => res.json(openapi));
+if (process.env.NODE_ENV !== "production") app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openapi));
+app.use("/api/products", productRouter);
+app.use(apiNotFound);
+app.use(errorHandler);
